@@ -1,0 +1,19 @@
+{
+  "name": "8080dasm",
+  "version": "1.0.0",
+  "description": "Disassembler for Intel 8080 CPU",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "./node_modules/node/bin/node src/index.t.js binaries/invaders.h"
+  },
+  "keywords": [
+    "dasm",
+    "assembler",
+    "8080"
+  ],
+  "author": "Cory Parsnipson",
+  "license": "MIT",
+  "dependencies": {
+    "node": "^13.5.0"
+  }
+}
