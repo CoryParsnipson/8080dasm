@@ -455,33 +455,61 @@ function num_bytes(opcode) {
    }
 }
 
-function disassemble(err, fd) {
-   if (err) {
-      throw err;
+function parse_instruction(fd, mem_offset) {
+   const instruction = {
+      addr: mem_offset,
+      file: fd,
+      len: 1,
+      opcode: null,
+      raw: null,
+   };
+
+   var header_byte = new Buffer.alloc(1);
+   var num_bytes_read = fs.readSync(fd, header_byte, 0, 1, mem_offset);
+   if (num_bytes_read === 0) {
+      throw "Could not read memory at location: " + mem_offset;
    }
 
-   var current_byte = new Buffer.alloc(1);
-   var instr_id = 0;
-   while (true) {
-      var num_bytes_read = fs.readSync(fd, current_byte, 0, 1, null);
+   instruction.opcode = decode(header_byte[0]);
+   instruction.len = num_bytes(instruction.opcode) + 1;
+
+   var num_data_bytes = instruction.len - 1;
+   var data_bytes = new Buffer.alloc(num_data_bytes);
+
+   for (var i = 0; i < num_data_bytes; ++i) {
+      num_bytes_read = fs.readSync(fd, data_bytes, i, 1, null);
       if (num_bytes_read === 0) {
-         break;
+         throw "Could not read complete data of instruction: " + JSON.stringify(instruction);
       }
+   }
 
-      var opcode = decode(current_byte[0]);
-      var num_data_bytes = num_bytes(opcode);
-      for (var i = 0; i < num_data_bytes; ++i) {
-         fs.readSync(fd, current_byte, 0, 1, null);
-      }
+   // TODO: parse register/register pair/data
 
-      console.log("INST " + instr_id + ": " + opcode);
-      instr_id += 1;
+   instruction.raw = Buffer.concat([header_byte, data_bytes], instruction.len);
+   return instruction;
+}
+
+function disassemble(filename) {
+   const fd = fs.openSync(filename, 'r');
+   const fstats = fs.statSync(filename);
+
+   const file_size = fstats.size;
+   var file_position = 0;
+   var instruction_id = 0;
+
+   while (file_position < file_size) {
+      const inst = parse_instruction(fd, file_position);
+      console.log("INST " + instruction_id + ": " + JSON.stringify(inst));
+
+      file_position += inst.len;
+      instruction_id += 1;
    }
 }
 
 module.exports = {
    decode: decode,
    disassemble: disassemble,
+   parse_instruction: parse_instruction,
    num_bytes: num_bytes,
    OP: OP
 };
