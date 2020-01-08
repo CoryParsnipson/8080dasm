@@ -1,5 +1,35 @@
 const fs = require('fs');
 
+const REG = {
+   B: 0,
+   C: 1,
+   D: 2,
+   E: 3,
+   H: 4,
+   L: 5,
+   M: 6,
+   A: 7,
+   0: "B",
+   1: "C",
+   2: "D",
+   3: "E",
+   4: "H",
+   5: "L",
+   6: "M",
+   7: "A"
+}
+
+const PAIR = {
+   B: 0,
+   D: 1,
+   H: 2,
+   PSW: 3,
+   0: "B",
+   1: "D",
+   2: "H",
+   3: "PSW"
+}
+
 const OP = {
    STC: "STC",
    CMC: "CMC",
@@ -455,12 +485,124 @@ function num_bytes(opcode) {
    }
 }
 
+function num2reg(register_id, throw_if_invalid = false) {
+   if (!(register_id in REG) && throw_if_invalid) {
+      throw "Could not convert provided register ID: " + register_id;
+   }
+
+   return REG[register_id];
+}
+
+function num2rp(register_pair, throw_if_invalid = false) {
+   if (!(register_pair in PAIR) && throw_if_invalid) {
+      throw `Could not convert provided register_pair (acceptable
+             values are 0, 1, 2, or 3): ` + register_pair
+   }
+
+   return PAIR[register_pair];
+}
+
+function get_operands(instruction) {
+   if (!instruction) {
+      throw "get_operands: null instruction provided."
+   }
+
+   const operands = {};
+   switch (instruction.opcode) {
+      case OP.INR:
+      case OP.DCR:
+         operands.src = num2reg((instruction.raw[0] >>> 3) & 0x07);
+         break;
+      case OP.MOV:
+         operands.dst = num2reg((instruction.raw[0] >>> 3) & 0x07);
+         operands.src = num2reg(instruction.raw[0] & 0x07);
+         break;
+      case OP.STAX:
+      case OP.LDAX:
+         // yes, mask only 1 bit. Register pair B (0) or D (1)
+         operands.rp = num2rp((instruction.raw[0] >>> 4) & 0x01);
+         break;
+      case OP.ADD:
+      case OP.ADC:
+      case OP.SUB:
+      case OP.SBB:
+      case OP.ANA:
+      case OP.XRA:
+      case OP.ORA:
+      case OP.CMP:
+         operands.src = num2reg(instruction.raw[0] & 0x07);
+         break;
+      case OP.PUSH:
+      case OP.POP:
+      case OP.DAD:
+      case OP.INX:
+      case OP.DCX:
+         operands.rp = num2rp((instruction.raw[0] >>> 4) & 0x03);
+         break;
+      case OP.LXI:
+         operands.rp = num2rp((instruction.raw[0] >>> 4) & 0x03);
+         operands.data_lo = instruction.raw[1];
+         operands.data_hi = instruction.raw[2];
+         break;
+      case OP.MVI:
+         operands.dst = num2reg((instruction.raw[0] >>> 3) & 0x07);
+         operands.data = instruction.raw[1];
+         break;
+      case OP.ADI:
+      case OP.ACI:
+      case OP.SUI:
+      case OP.SBI:
+      case OP.ANI:
+      case OP.XRI:
+      case OP.ORI:
+      case OP.CPI:
+      case OP.IN:
+      case OP.OUT:
+         operands.data = instruction.raw[1];
+         break;
+      case OP.STA:
+      case OP.LDA:
+      case OP.SHLD:
+      case OP.LHLD:
+      case OP.JMP:
+      case OP.JC:
+      case OP.JNC:
+      case OP.JZ:
+      case OP.JNZ:
+      case OP.JP:
+      case OP.JM:
+      case OP.JPE:
+      case OP.JPO:
+      case OP.CALL:
+      case OP.CC:
+      case OP.CNC:
+      case OP.CZ:
+      case OP.CNZ:
+      case OP.CP:
+      case OP.CM:
+      case OP.CPE:
+      case OP.CPO:
+         operands.data_lo = instruction.raw[1];
+         operands.data_hi = instruction.raw[2];
+         break;
+      case OP.RST:
+         operands.interrupt_id = (instruction.raw[0] >>> 3) & 0x07;
+         break;
+      default:
+         // no need to do anything
+         break;
+   }
+
+   return operands;
+}
+
 function parse_instruction(fd, mem_offset) {
    const instruction = {
       addr: mem_offset,
       file: fd,
       len: 1,
       opcode: null,
+      operands: {},
       raw: null,
    };
 
@@ -483,9 +625,9 @@ function parse_instruction(fd, mem_offset) {
       }
    }
 
-   // TODO: parse register/register pair/data
-
    instruction.raw = Buffer.concat([header_byte, data_bytes], instruction.len);
+   instruction.operands = get_operands(instruction);
+
    return instruction;
 }
 
@@ -509,7 +651,10 @@ function disassemble(filename) {
 module.exports = {
    decode: decode,
    disassemble: disassemble,
+   get_operands: get_operands,
    parse_instruction: parse_instruction,
    num_bytes: num_bytes,
-   OP: OP
+   OP: OP,
+   PAIR: PAIR,
+   REG: REG
 };
