@@ -6,6 +6,10 @@
   "scripts": {
     "test": "./node_modules/node/bin/node src/index.t.js binaries/invaders.h"
   },
+  "repository": {
+     "type": "git",
+     "url": "https://github.com/CoryParsnipson/8080dasm.git"
+  },
   "keywords": [
     "dasm",
     "assembler",
