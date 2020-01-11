@@ -631,7 +631,7 @@ function parse_instruction(fd, mem_offset) {
    return instruction;
 }
 
-function disassemble(filename) {
+function disassemble(filename, quiet = true) {
    const fd = fs.openSync(filename, 'r');
    const fstats = fs.statSync(filename);
 
@@ -639,13 +639,20 @@ function disassemble(filename) {
    var file_position = 0;
    var instruction_id = 0;
 
+   const instructions = [];
+
    while (file_position < file_size) {
       const inst = parse_instruction(fd, file_position);
-      console.log("INST " + instruction_id + ": " + JSON.stringify(inst));
+      if (!quiet) {
+         console.log("INST " + instruction_id + ": " + JSON.stringify(inst));
+      }
 
       file_position += inst.len;
       instruction_id += 1;
+      instructions.push(inst);
    }
+
+   return instructions;
 }
 
 module.exports = {
