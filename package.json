@@ -17,7 +17,8 @@
   ],
   "author": "Cory Parsnipson",
   "license": "MIT",
-  "dependencies": {
-    "node": "^13.5.0"
+  "dependencies": {},
+  "devDependencies": {
+    "node": "^13.6.0"
   }
 }
