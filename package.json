@@ -18,7 +18,6 @@
   "author": "Cory Parsnipson",
   "license": "MIT",
   "dependencies": {
-    "fs": "0.0.1-security",
     "node": "^13.5.0"
   }
 }
