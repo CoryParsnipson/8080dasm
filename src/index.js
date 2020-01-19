@@ -141,6 +141,13 @@ function decode(instr) {
       case 0x27:
          return OP.DAA;
       case 0x00:
+      case 0x10:
+      case 0x20:
+      case 0x30:
+      case 0x08:
+      case 0x18:
+      case 0x28:
+      case 0x38:
          return OP.NOP;
       case 0x40:
       case 0x41:
@@ -383,6 +390,9 @@ function decode(instr) {
       case 0xE2:
          return OP.JPO;
       case 0xCD:
+      case 0xDD:
+      case 0xED:
+      case 0xFD:
          return OP.CALL;
       case 0xDC:
          return OP.CC;
@@ -401,6 +411,7 @@ function decode(instr) {
       case 0xE4:
          return OP.CPO;
       case 0xC9:
+      case 0xD9:
          return OP.RET;
       case 0xD8:
          return OP.RC;
@@ -642,7 +653,14 @@ function disassemble(filename, quiet = true) {
    const instructions = [];
 
    while (file_position < file_size) {
-      const inst = parse_instruction(fd, file_position);
+      var inst;
+      try {
+         inst = parse_instruction(fd, file_position);
+      } catch (e) {
+         console.log("ERROR: (instruction #" + instruction_id + ") " + e.toString());
+         return instructions;
+      }
+
       if (!quiet) {
          console.log("INST " + instruction_id + ": " + JSON.stringify(inst));
       }
