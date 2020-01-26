@@ -115,7 +115,7 @@ const TYPE = {
    ACCUM: "ACCUM",
    CALL: "CALL",
    CARRY: "CARRY",
-   DATAXTFR: "DATAXTFR",
+   DATAXFER: "DATAXFER",
    DIRECTADDR: "DIRECTADDR",
    HALT: "HALT",
    IO: "IO",
@@ -641,7 +641,7 @@ function get_instruction_type(instruction) {
       case OP.MOV:
       case OP.STAX:
       case OP.LDAX:
-         return TYPE.DATAXTFR;
+         return TYPE.DATAXFER;
       case OP.ADD:
       case OP.ADC:
       case OP.SUB:
