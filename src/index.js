@@ -111,6 +111,25 @@ const OP = {
    HLT: "HLT",
 };
 
+const TYPE = {
+   ACCUM: "ACCUM",
+   CALL: "CALL",
+   CARRY: "CARRY",
+   DATAXTFR: "DATAXTFR",
+   DIRECTADDR: "DIRECTADDR",
+   HALT: "HALT",
+   IO: "IO",
+   IMMEDIATE: "IMMEDIATE",
+   INTERRUPT: "INTERRUPT",
+   JUMP: "JUMP",
+   NOP: "NOP",
+   REGPAIR: "REGPAIR",
+   RESET: "RESET",
+   RETURN: "RETURN",
+   ROTATE: "ROTATE",
+   SINGLEREG: "SINGLEREG",
+}
+
 // instr is an integer between 0 and 255
 function decode(instr) {
    switch(instr) {
@@ -607,6 +626,107 @@ function get_operands(instruction) {
    return operands;
 }
 
+function get_instruction_type(instruction) {
+   switch (instruction.opcode) {
+      case OP.STC:
+      case OP.CMC:
+         return TYPE.CARRY;
+      case OP.INR:
+      case OP.DCR:
+      case OP.CMA:
+      case OP.DAA:
+         return TYPE.SINGLEREG;
+      case OP.NOP:
+         return TYPE.NOP;
+      case OP.MOV:
+      case OP.STAX:
+      case OP.LDAX:
+         return TYPE.DATAXTFR;
+      case OP.ADD:
+      case OP.ADC:
+      case OP.SUB:
+      case OP.SBB:
+      case OP.ANA:
+      case OP.XRA:
+      case OP.ORA:
+      case OP.CMP:
+         return TYPE.ACCUM;
+      case OP.RLC:
+      case OP.RRC:
+      case OP.RAL:
+      case OP.RAR:
+         return TYPE.ROTATE;
+      case OP.PUSH:
+      case OP.POP:
+      case OP.DAD:
+      case OP.INX:
+      case OP.DCX:
+      case OP.XCHG:
+      case OP.XTHL:
+      case OP.SPHL:
+         return TYPE.REGPAIR;
+      case OP.LXI:
+      case OP.MVI:
+      case OP.ADI:
+      case OP.ACI:
+      case OP.SUI:
+      case OP.SBI:
+      case OP.ANI:
+      case OP.XRI:
+      case OP.ORI:
+      case OP.CPI:
+         return TYPE.IMMEDIATE;
+      case OP.STA:
+      case OP.LDA:
+      case OP.SHLD:
+      case OP.LHLD:
+         return TYPE.DIRECTADDR;
+      case OP.PCHL:
+      case OP.JMP:
+      case OP.JC:
+      case OP.JNC:
+      case OP.JZ:
+      case OP.JNZ:
+      case OP.JP:
+      case OP.JM:
+      case OP.JPE:
+      case OP.JPO:
+         return TYPE.JUMP;
+      case OP.CALL:
+      case OP.CC:
+      case OP.CNC:
+      case OP.CZ:
+      case OP.CNZ:
+      case OP.CP:
+      case OP.CM:
+      case OP.CPE:
+      case OP.CPO:
+         return TYPE.CALL;
+      case OP.RET:
+      case OP.RC:
+      case OP.RNC:
+      case OP.RZ:
+      case OP.RNZ:
+      case OP.RM:
+      case OP.RP:
+      case OP.RPE:
+      case OP.RPO:
+         return TYPE.RETURN;
+      case OP.RST:
+         return TYPE.RESET;
+      case OP.EI:
+      case OP.DI:
+         return TYPE.INTERRUPT;
+      case OP.IN:
+      case OP.OUT:
+         return TYPE.IO;
+      case OP.HLT:
+         return TYPE.HALT;
+      default:
+         throw "Could not find group for instruction: " + instr.toString();
+   }
+}
+
 function parse_instruction(fd, mem_offset) {
    const instruction = {
       addr: mem_offset,
@@ -615,6 +735,7 @@ function parse_instruction(fd, mem_offset) {
       opcode: null,
       operands: {},
       raw: null,
+      type: "",
    };
 
    var header_byte = new Buffer.alloc(1);
@@ -638,6 +759,7 @@ function parse_instruction(fd, mem_offset) {
 
    instruction.raw = Buffer.concat([header_byte, data_bytes], instruction.len);
    instruction.operands = get_operands(instruction);
+   instruction.type = get_instruction_type(instruction);
 
    return instruction;
 }
@@ -677,9 +799,11 @@ module.exports = {
    decode: decode,
    disassemble: disassemble,
    get_operands: get_operands,
+   get_instruction_type: get_instruction_type,
    parse_instruction: parse_instruction,
    num_bytes: num_bytes,
    OP: OP,
    PAIR: PAIR,
-   REG: REG
+   REG: REG,
+   TYPE: TYPE,
 };

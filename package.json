@@ -1,6 +1,6 @@
 {
   "name": "8080dasm",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Disassembler for Intel 8080 CPU",
   "main": "src/index.js",
   "scripts": {
