@@ -751,12 +751,11 @@ function parse_instruction(fd, mem_offset) {
    var data_bytes = new Buffer.alloc(num_data_bytes);
 
    for (var i = 0; i < num_data_bytes; ++i) {
-      num_bytes_read = fs.readSync(fd, data_bytes, i, 1, null);
+      num_bytes_read = fs.readSync(fd, data_bytes, i, 1, mem_offset + i);
       if (num_bytes_read === 0) {
          throw "Could not read complete data of instruction: " + JSON.stringify(instruction);
       }
    }
-
    instruction.raw = Buffer.concat([header_byte, data_bytes], instruction.len);
    instruction.operands = get_operands(instruction);
    instruction.type = get_instruction_type(instruction);
