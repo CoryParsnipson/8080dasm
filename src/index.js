@@ -751,7 +751,7 @@ function parse_instruction(fd, mem_offset) {
    var data_bytes = new Buffer.alloc(num_data_bytes);
 
    for (var i = 0; i < num_data_bytes; ++i) {
-      num_bytes_read = fs.readSync(fd, data_bytes, i, 1, mem_offset + i);
+      num_bytes_read = fs.readSync(fd, data_bytes, i, 1, mem_offset + i + 1);
       if (num_bytes_read === 0) {
          throw "Could not read complete data of instruction: " + JSON.stringify(instruction);
       }
